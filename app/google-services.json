@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "547004637049",
+    "firebase_url": "https://demofirebase-ef683-default-rtdb.firebaseio.com",
+    "project_id": "demofirebase-ef683",
+    "storage_bucket": "demofirebase-ef683.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547004637049:android:8f15744f811ebc50dd59a8",
+        "android_client_info": {
+          "package_name": "com.example.cruddb"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWWEG0HJRvG_irlmoXoPWQQB2FsJx15fA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547004637049:android:3ba17d1656e8ac76dd59a8",
+        "android_client_info": {
+          "package_name": "com.example.cruddbbasic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWWEG0HJRvG_irlmoXoPWQQB2FsJx15fA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
