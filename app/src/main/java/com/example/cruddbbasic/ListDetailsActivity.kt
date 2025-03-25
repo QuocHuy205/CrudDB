@@ -1,10 +1,8 @@
 package com.example.firebaseproject
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,7 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,56 +19,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cruddbbasic.MainActivity
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.jvm.java
 
-class UpdateList : ComponentActivity() {
+class ListDetailsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            UpdateScreen(
-                LocalContext.current,
-                intent.getStringExtra("Title") ?: "",
-                intent.getStringExtra("Description") ?: "",
-                intent.getStringExtra("ID") ?: ""
-            )
+            AddNoteScreen(LocalContext.current)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UpdateScreen(context: Context, title: String, description: String, ID: String) {
-    var titleState by remember { mutableStateOf(TextFieldValue(title)) }
-    var descriptionState by remember { mutableStateOf(TextFieldValue(description)) }
+fun AddNoteScreen(context: Context) {
+    var titleState by remember { mutableStateOf(TextFieldValue("")) }
+    var descriptionState by remember { mutableStateOf(TextFieldValue("")) }
     val db = FirebaseFirestore.getInstance()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Note App",
-                        color = Color(0xFFFFA500),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                },
-                actions = {
-                    IconButton(onClick = {
-                        db.collection("List").document(ID).delete().addOnSuccessListener {
-                            Toast.makeText(context, "Deleted successfully", Toast.LENGTH_SHORT).show()
-                            context.startActivity(Intent(context, MainActivity::class.java))
-                        }
-                    }) {
-                        Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = Color.Red)
-                    }
-                },
+                title = { Text("Note App", color = Color(0xFFFFA500), fontSize = 18.sp, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF121212)
                 )
@@ -81,50 +55,57 @@ fun UpdateScreen(context: Context, title: String, description: String, ID: Strin
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(Color(0xFF1E1E1E)),
+                .background(Color(0xFF1E1E1E))
+                .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Text("Title", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             OutlinedTextField(
                 value = titleState,
                 onValueChange = { titleState = it },
-                label = { Text("Title", color = Color.White) },
+                placeholder = { Text("Enter your note title", color = Color.Gray) },
                 textStyle = LocalTextStyle.current.copy(color = Color.White),
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth(),
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color(0xFFFFA500),
                     unfocusedBorderColor = Color.Gray
                 )
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Description", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
             OutlinedTextField(
                 value = descriptionState,
                 onValueChange = { descriptionState = it },
-                label = { Text("Description", color = Color.White) },
+                placeholder = { Text("Enter your note description", color = Color.Gray) },
                 textStyle = LocalTextStyle.current.copy(color = Color.White),
-                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                modifier = Modifier.fillMaxWidth().height(120.dp),
                 colors = TextFieldDefaults.outlinedTextFieldColors(
                     focusedBorderColor = Color(0xFFFFA500),
                     unfocusedBorderColor = Color.Gray
                 )
             )
+            Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = {
                     if (titleState.text.isEmpty() || descriptionState.text.isEmpty()) {
                         Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     } else {
-                        db.collection("List").document(ID).set(mapOf(
+                        val newNote = hashMapOf(
                             "Title" to titleState.text,
                             "Description" to descriptionState.text
-                        )).addOnSuccessListener {
-                            Toast.makeText(context, "Updated successfully", Toast.LENGTH_SHORT).show()
+                        )
+                        db.collection("List").add(newNote).addOnSuccessListener {
+                            Toast.makeText(context, "Added successfully", Toast.LENGTH_SHORT).show()
                             context.startActivity(Intent(context, MainActivity::class.java))
                         }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFA500)),
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
+                modifier = Modifier.fillMaxWidth().height(50.dp),
+                shape = RoundedCornerShape(8.dp)
             ) {
-                Text("UPDATE ITEM", modifier = Modifier.padding(8.dp), color = Color.White, fontWeight = FontWeight.Bold)
+                Text("ADD ITEM", color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

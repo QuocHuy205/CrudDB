@@ -2,8 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
 
     <application
         android:allowBackup="true"
@@ -15,24 +22,32 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Firebaseproject"
         tools:targetApi="31">
+
         <activity
-            android:name="com.example.firebaseproject.CourseDetailsActivity"
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Firebaseproject" />
+
+        <activity
+            android:name="com.example.firebaseproject.ListDetailsActivity"
             android:exported="false"
             android:label="@string/title_activity_course_details"
             android:theme="@style/Theme.Firebaseproject" />
+
         <activity
             android:name="com.example.firebaseproject.UpdateList"
             android:exported="false"
             android:label="@string/title_activity_update_course"
             android:theme="@style/Theme.Firebaseproject" />
+
         <activity
-            android:name=".MainActivity"
+            android:name=".AuthActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Firebaseproject">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

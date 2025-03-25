@@ -3,45 +3,187 @@ package com.example.cruddbbasic
 import android.os.Bundle
 import android.content.Context
 import android.content.Intent
+import android.os.Looper
+import android.os.Handler
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode.Companion.Screen
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.firebaseproject.ListDetailsActivity
 import com.example.firebaseproject.List
-import com.example.firebaseproject.CourseDetailsActivity
+import com.example.firebaseproject.UpdateList
 import com.example.firebaseproject.ui.theme.FirebaseprojectTheme
-import com.google.firebase.firestore.CollectionReference
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import java.util.UUID
+import kotlin.jvm.java
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent {
-            FirebaseprojectTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Scaffold() { innerPadding ->
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(innerPadding)
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+        val auth = FirebaseAuth.getInstance()
+
+        Handler(Looper.getMainLooper()).postDelayed({
+            if (auth.currentUser == null) {
+                startActivity(Intent(this, AuthActivity::class.java))
+                finish()
+            } else {
+                setContent { FirebaseprojectTheme {
+                    MaterialTheme(
+                        colorScheme = darkColorScheme(
+                            background = Color(0xFF1E1E1E)
+                        )
+                    ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = Color(0xFF1C2A3A)
                         ) {
-                            FirebaseUI(LocalContext.current)
+                            Scaffold(
+                                topBar = {
+                                    CenterAlignedTopAppBar(
+                                        title = {
+                                            Text(
+                                                "Note App",
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFFFFA500)
+                                            )
+                                        },
+                                        actions = {
+                                            IconButton(onClick = { logout(this@MainActivity) }) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ExitToApp,
+                                                    contentDescription = "Logout",
+                                                    tint = Color.White
+                                                )
+                                            }
+                                        },
+                                        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                                            containerColor = Color(0xFF121212)
+                                        )
+                                    )
+                                },
+                                floatingActionButton = {
+                                    val context = LocalContext.current
+                                    FloatingActionButton(
+                                        onClick = {
+                                            context.startActivity(
+                                                Intent(
+                                                    context,
+                                                    ListDetailsActivity::class.java
+                                                )
+                                            )
+                                        },
+                                        containerColor = Color(0xFFFFA500)
+                                    ) {
+                                        Icon(
+                                            Icons.Filled.Add,
+                                            contentDescription = "Add",
+                                            tint = Color.White
+                                        )
+                                    }
+                                }
+                            ) { innerPadding ->
+                                Column(modifier = Modifier.padding(innerPadding)) {
+                                    val courseList = remember { mutableStateListOf<List?>() }
+                                    val db = FirebaseFirestore.getInstance()
+
+                                    db.collection("List").get()
+                                        .addOnSuccessListener { queryDocumentSnapshots ->
+                                            if (!queryDocumentSnapshots.isEmpty) {
+                                                val list = queryDocumentSnapshots.documents
+                                                for (d in list) {
+                                                    val c: List? = d.toObject(List::class.java)
+                                                    c?.ID = d.id
+                                                    courseList.add(c)
+                                                }
+                                            } else {
+                                                Toast.makeText(
+                                                    this@MainActivity,
+                                                    "No data found in Database",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "Fail to get the data.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    CourseListUI(LocalContext.current, courseList)
+                                }
+                            }
+                        }
+                    }
+                } }
+            }
+        }, 1000)
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun CourseListUI(context: Context, courseList: SnapshotStateList<List?>) {
+        LazyColumn(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            itemsIndexed(courseList) { _, item ->
+                Card(
+                    onClick = {
+                        val i = Intent(context, UpdateList::class.java)
+                        i.putExtra("Title", item?.Title)
+                        i.putExtra("Description", item?.Description)
+                        i.putExtra("ID", item?.ID)
+                        context.startActivity(i)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF394B5F)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(10.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        item?.Title?.let {
+                            Text(
+                                text = it,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        item?.Description?.let {
+                            Text(
+                                text = it,
+                                fontSize = 14.sp,
+                                color = Color(0xFFD0D0D0)
+                            )
                         }
                     }
                 }
@@ -50,85 +192,4 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun FirebaseUI(context: Context) {
-    val ID = remember { mutableStateOf("") }
-    val Name = remember { mutableStateOf("") }
-    val Age = remember { mutableStateOf("") }
-    val Address = remember { mutableStateOf("") }
 
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        modifier = Modifier.padding(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            OutlinedTextField(
-                value = Name.value,
-                onValueChange = { Name.value = it },
-                label = { Text("Tên sinh viên") },
-                textStyle = TextStyle(fontSize = 16.sp)
-            )
-
-            OutlinedTextField(
-                value = Age.value,
-                onValueChange = { Age.value = it },
-                label = { Text("Tuổi") },
-                textStyle = TextStyle(fontSize = 16.sp)
-            )
-
-            OutlinedTextField(
-                value = Address.value,
-                onValueChange = { Address.value = it },
-                label = { Text("Địa chỉ") },
-                textStyle = TextStyle(fontSize = 16.sp)
-            )
-
-            Button(
-                onClick = {
-                    if (Name.value.isBlank()) {
-                        Toast.makeText(context, "Vui lòng nhập tên", Toast.LENGTH_SHORT).show()
-                    } else if (Age.value.isBlank()) {
-                        Toast.makeText(context, "Vui lòng nhập tuổi", Toast.LENGTH_SHORT).show()
-                    } else if (Address.value.isBlank()) {
-                        Toast.makeText(context, "Vui lòng nhập địa chỉ", Toast.LENGTH_SHORT).show()
-                    } else {
-
-                        ID.value = UUID.randomUUID().toString()
-                        addDataToFirebase(
-                            ID.value, Name.value, Age.value, Address.value, context)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(text = "Thêm sinh viên", modifier = Modifier.padding(8.dp))
-            }
-
-            Button(
-                onClick = { context.startActivity(Intent(context, CourseDetailsActivity::class.java)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
-            ) {
-                Text(text = "Xem danh sách sinh viên", modifier = Modifier.padding(8.dp))
-            }
-        }
-    }
-}
-
-fun addDataToFirebase(ID: String, Name: String, Age: String, Address: String, context: Context) {
-    val db: FirebaseFirestore = FirebaseFirestore.getInstance()
-    val dbCourses: CollectionReference = db.collection("List")
-    val courses = List(ID, Name, Age, Address)
-
-    dbCourses.add(courses).addOnSuccessListener {
-        Toast.makeText(context, "Thêm thành công!", Toast.LENGTH_SHORT).show()
-    }.addOnFailureListener { e ->
-        Toast.makeText(context, "Lỗi: $e", Toast.LENGTH_SHORT).show()
-    }
-}
